@@ -310,6 +310,8 @@ export default function HydraDashboard() {
                       "TypeError: Cannot read properties of undefined (reading 'length')\n    at calculateAverage (test-fixtures/node-target/src/calculator.js:5:17)\n    at Object.<anonymous> (test-fixtures/node-target/test/calculator.test.js:6:3)"
                     );
                     setSimulate(false);
+                    setLogs([]);
+                    setRunResult({ runId: "", status: "idle", astNodes: [], astLinks: [] });
                   }}
                   className="py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-[11px] font-mono text-slate-300 hover:text-white transition-all text-center"
                 >
@@ -325,6 +327,8 @@ export default function HydraDashboard() {
                       "ZeroDivisionError: division by zero\n  File \"test-fixtures/python-target/src/pricing.py\", line 5, in compute_discount\n    discount_amount = price * (discount_percent / 0)\n  File \"test-fixtures/python-target/tests/test_pricing.py\", line 4, in test_discount\n    assert compute_discount(100.0, 20.0) == 80.0"
                     );
                     setSimulate(false);
+                    setLogs([]);
+                    setRunResult({ runId: "", status: "idle", astNodes: [], astLinks: [] });
                   }}
                   className="py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-[11px] font-mono text-slate-300 hover:text-white transition-all text-center"
                 >
@@ -340,6 +344,8 @@ export default function HydraDashboard() {
                       "java.lang.ArithmeticException: / by zero\n\tat com.hydra.MathOps.divide(test-fixtures/java-target/src/main/java/com/hydra/MathOps.java:6)"
                     );
                     setSimulate(false);
+                    setLogs([]);
+                    setRunResult({ runId: "", status: "idle", astNodes: [], astLinks: [] });
                   }}
                   className="py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-[11px] font-mono text-slate-300 hover:text-white transition-all text-center"
                 >

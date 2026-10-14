@@ -21,20 +21,44 @@ export async function runCritic(
   let detectedFile = "";
   let detectedLine = 0;
 
-  // 1. Fast regex extraction of stack traces
-  const regex = /(?:at\s+.*\((.*?):(\d+):(\d+)\)|at\s+(.*?):(\d+):(\d+))/g;
-  let match;
+  // 1. Fast multi-language regex extraction of stack traces (Node, Python, Java)
   const filesFound: { path: string; line: number }[] = [];
 
-  while ((match = regex.exec(stackTrace)) !== null) {
-    const rawPath = match[1] || match[4];
-    const lineNum = parseInt(match[2] || match[5], 10);
+  // Java & generic format: at ... (path/to/File.java:12) or at ... path/to/File.java:12
+  const javaRegex = /at\s+[\w$.]+\((.*?):(\d+)\)/g;
+  let jMatch;
+  while ((jMatch = javaRegex.exec(stackTrace)) !== null) {
+    const raw = jMatch[1];
+    const lineNum = parseInt(jMatch[2], 10);
+    const candidatePath = path.isAbsolute(raw) ? raw : path.join(workspacePath, raw);
+    if (fs.existsSync(candidatePath)) {
+      filesFound.push({ path: candidatePath, line: lineNum });
+    }
+  }
 
-    if (rawPath && !rawPath.includes("node_modules") && !rawPath.includes("node:")) {
-      const candidatePath = path.isAbsolute(rawPath) ? rawPath : path.join(workspacePath, rawPath);
+  // Node format: at ... (path:1:2) or at path:1:2
+  const nodeRegex = /(?:at\s+.*\((.*?):(\d+):(\d+)\)|at\s+(.*?):(\d+):(\d+))/g;
+  let nMatch;
+  while ((nMatch = nodeRegex.exec(stackTrace)) !== null) {
+    const raw = nMatch[1] || nMatch[4];
+    const lineNum = parseInt(nMatch[2] || nMatch[5], 10);
+    if (raw && !raw.includes("node_modules") && !raw.includes("node:")) {
+      const candidatePath = path.isAbsolute(raw) ? raw : path.join(workspacePath, raw);
       if (fs.existsSync(candidatePath)) {
         filesFound.push({ path: candidatePath, line: lineNum });
       }
+    }
+  }
+
+  // Python format: File "path/to/file.py", line 12
+  const pyRegex = /File\s+["'](.*?)["'],\s+line\s+(\d+)/g;
+  let pMatch;
+  while ((pMatch = pyRegex.exec(stackTrace)) !== null) {
+    const raw = pMatch[1];
+    const lineNum = parseInt(pMatch[2], 10);
+    const candidatePath = path.isAbsolute(raw) ? raw : path.join(workspacePath, raw);
+    if (fs.existsSync(candidatePath)) {
+      filesFound.push({ path: candidatePath, line: lineNum });
     }
   }
 
