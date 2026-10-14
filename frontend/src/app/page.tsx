@@ -18,7 +18,8 @@ import { Spinner, Skeleton } from "@/components/ui/Feedback";
 import { useAuth } from "@/context/AuthContext";
 import { AuthScreen } from "@/components/AuthScreen";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5001";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "https://137.23.40.113.sslip.io/hydra";
 
 interface RunResult {
   runId: string;
