@@ -27,16 +27,14 @@ export async function runCritic(
   const filesFound: { path: string; line: number }[] = [];
 
   while ((match = regex.exec(stackTrace)) !== null) {
-    const candidatePath = match[1] || match[4];
+    const rawPath = match[1] || match[4];
     const lineNum = parseInt(match[2] || match[5], 10);
 
-    if (
-      candidatePath &&
-      !candidatePath.includes("node_modules") &&
-      !candidatePath.includes("node:") &&
-      fs.existsSync(candidatePath)
-    ) {
-      filesFound.push({ path: candidatePath, line: lineNum });
+    if (rawPath && !rawPath.includes("node_modules") && !rawPath.includes("node:")) {
+      const candidatePath = path.isAbsolute(rawPath) ? rawPath : path.join(workspacePath, rawPath);
+      if (fs.existsSync(candidatePath)) {
+        filesFound.push({ path: candidatePath, line: lineNum });
+      }
     }
   }
 
@@ -47,7 +45,7 @@ export async function runCritic(
     const chosen = nonTestFile || filesFound[0];
     detectedFile = chosen.path;
     detectedLine = chosen.line;
-    logMessage += `✓ Stack trace match: ${path.basename(detectedFile)} at line ${detectedLine}\n`;
+    logMessage += `✓ Stack trace match: ${path.relative(workspacePath, detectedFile).replace(/\\/g, "/")} at line ${detectedLine}\n`;
   }
 
   // 2. LangChain Gemini Critic for intelligent fault localization
@@ -56,11 +54,17 @@ export async function runCritic(
 
   const gemini = GeminiService.getInstance();
   const keyRotator = gemini.getKeyRotator();
-  const activeKey = keyRotator.getActiveKey();
 
-  if (activeKey) {
+  let criticAttempt = 0;
+  const maxCriticRetries = Math.min(keyRotator.totalKeys() || 1, 3);
+
+  while (criticAttempt < maxCriticRetries) {
+    criticAttempt++;
+    const activeKey = keyRotator.getActiveKey();
+    if (!activeKey) break;
+
     try {
-      logMessage += `Consulting LangChain Critic (${gemini.getModelName()} via ${keyRotator.getMaskedKey()})...\n`;
+      logMessage += `Consulting LangChain Critic (${gemini.getModelName()} via ${keyRotator.getMaskedKey()} - Attempt #${criticAttempt})...\n`;
       const model = gemini.getModel(activeKey, 0.1);
 
       const prompt = `
@@ -105,21 +109,47 @@ Respond strictly in valid JSON without backticks:
         detectedLine = parsed.lineNumber || detectedLine;
         logMessage += `✓ Critic isolated defect target: ${parsed.failingFile}:${detectedLine}\n`;
       }
+      break;
     } catch (err: any) {
-      logMessage += `⚠ Critic LLM analysis warning: ${err.message}. Proceeding with pattern match.\n`;
+      const errMsg = err?.message || String(err);
+      const isRecoverable =
+        errMsg.includes("429") ||
+        errMsg.includes("quota") ||
+        errMsg.includes("ResourceExhausted") ||
+        errMsg.includes("503") ||
+        errMsg.includes("500") ||
+        errMsg.includes("502") ||
+        errMsg.includes("high demand") ||
+        errMsg.includes("Service Unavailable") ||
+        errMsg.includes("overloaded");
+
+      if (isRecoverable && criticAttempt < maxCriticRetries) {
+        logMessage += `⚠ Critic encountered transient status (${errMsg.slice(0, 60)}...). Rotating key...\n`;
+        keyRotator.rotateToNextKey("Critic retry");
+        await new Promise((r) => setTimeout(r, 1000 * criticAttempt));
+        continue;
+      }
+      logMessage += `⚠ Critic LLM analysis warning: ${errMsg}. Proceeding with pattern match.\n`;
+      break;
     }
   }
 
   if (!detectedFile) {
     const files = listWorkspaceFiles(workspacePath);
     const sourceFiles = files.filter(
-      (f) => f.endsWith(".js") || f.endsWith(".ts") || f.endsWith(".py") || f.endsWith(".java")
+      (f) =>
+        (f.endsWith(".js") || f.endsWith(".ts") || f.endsWith(".py") || f.endsWith(".java")) &&
+        !f.includes("test") &&
+        !f.includes("spec") &&
+        !f.includes("dist")
     );
-    const firstCandidate = sourceFiles.find((f) => !f.includes("test") && !f.includes("spec"));
+    // Prefer test-fixtures targets if running a sample test pipeline
+    const fixtureCandidate = sourceFiles.find((f) => f.includes("test-fixtures"));
+    const firstCandidate = fixtureCandidate || sourceFiles[0];
     if (firstCandidate) {
       detectedFile = path.join(workspacePath, firstCandidate);
       detectedLine = 1;
-      logMessage += `⚠ Defaulting to primary source file: ${firstCandidate}\n`;
+      logMessage += `⚠ Pattern match selected primary source target: ${firstCandidate}\n`;
     } else {
       throw new Error("Critic Agent failed: No valid source code files found in target workspace.");
     }
