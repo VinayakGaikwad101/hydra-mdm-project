@@ -37,13 +37,13 @@ interface RunResult {
 export default function HydraDashboard() {
   const { user, token, isLoading, logout } = useAuth();
 
-  const [repoUrl, setRepoUrl] = useState("https://github.com/expressjs/express");
-  const [branch, setBranch] = useState("master");
-  const [testCommand, setTestCommand] = useState("npm test");
+  const [repoUrl, setRepoUrl] = useState("https://github.com/VinayakGaikwad101/hydra-mdm-project");
+  const [branch, setBranch] = useState("main");
+  const [testCommand, setTestCommand] = useState("node test-fixtures/node-target/test/calculator.test.js");
   const [stackTrace, setStackTrace] = useState(
-    "TypeError: Cannot read properties of undefined (reading 'length')\n    at average (src/calculator.js:4:16)\n    at Object.<anonymous> (test/calculator.test.js:12:5)"
+    "TypeError: Cannot read properties of undefined (reading 'length')\n    at calculateAverage (test-fixtures/node-target/src/calculator.js:5:17)\n    at Object.<anonymous> (test-fixtures/node-target/test/calculator.test.js:6:3)"
   );
-  const [simulate, setSimulate] = useState(true);
+  const [simulate, setSimulate] = useState(false);
 
   const [isRunning, setIsRunning] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
@@ -293,17 +293,57 @@ export default function HydraDashboard() {
               />
             </div>
 
-            <div className="pt-2 flex items-center justify-between border-t border-slate-800">
-              <label className="text-xs font-medium text-slate-400 flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={simulate}
-                  onChange={(e) => setSimulate(e.target.checked)}
-                  className="rounded border-slate-700 bg-slate-950 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                />
-                <span>Demo Simulation Workspace</span>
-              </label>
-              <span className="text-[11px] text-slate-500 font-mono">Immediate Run</span>
+            <div className="pt-2 border-t border-slate-800 space-y-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
+                Quick Test Target Presets
+              </span>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRepoUrl("https://github.com/VinayakGaikwad101/hydra-mdm-project");
+                    setBranch("main");
+                    setTestCommand("node test-fixtures/node-target/test/calculator.test.js");
+                    setStackTrace(
+                      "TypeError: Cannot read properties of undefined (reading 'length')\n    at calculateAverage (test-fixtures/node-target/src/calculator.js:5:17)\n    at Object.<anonymous> (test-fixtures/node-target/test/calculator.test.js:6:3)"
+                    );
+                    setSimulate(false);
+                  }}
+                  className="py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-[11px] font-mono text-slate-300 hover:text-white transition-all text-center"
+                >
+                  Node.js
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRepoUrl("https://github.com/VinayakGaikwad101/hydra-mdm-project");
+                    setBranch("main");
+                    setTestCommand("python3 test-fixtures/python-target/tests/test_pricing.py");
+                    setStackTrace(
+                      "ZeroDivisionError: division by zero\n  File \"test-fixtures/python-target/src/pricing.py\", line 5, in compute_discount\n    discount_amount = price * (discount_percent / 0)\n  File \"test-fixtures/python-target/tests/test_pricing.py\", line 4, in test_discount\n    assert compute_discount(100.0, 20.0) == 80.0"
+                    );
+                    setSimulate(false);
+                  }}
+                  className="py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-[11px] font-mono text-slate-300 hover:text-white transition-all text-center"
+                >
+                  Python
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRepoUrl("https://github.com/VinayakGaikwad101/BankingAppJava");
+                    setBranch("master");
+                    setTestCommand("mvn test");
+                    setStackTrace(
+                      "java.lang.ArithmeticException: / by zero\n\tat com.hydra.MathOps.divide(MathOps.java:5)\n\tat com.hydra.MathOpsTest.testDivide(MathOpsTest.java:10)"
+                    );
+                    setSimulate(false);
+                  }}
+                  className="py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-[11px] font-mono text-slate-300 hover:text-white transition-all text-center"
+                >
+                  Java (Maven)
+                </button>
+              </div>
             </div>
           </div>
 
