@@ -1,0 +1,39 @@
+flowchart TD
+    subgraph Browser["HYDRA Web Dashboard (Obsidian/Dark Palette)"]
+        subgraph TopNav["Navigation Bar (Sticky Top)"]
+            Logo["HYDRA [Self-Healing CI/CD]"]
+            ModeSwitch["Mode Switcher: [Fix Repository Issues | Chat With Repository]"]
+            QueueBtn["Worker Queues [BullMQ Redis Live]"]
+            Profile["User: Vinayak Gaikwad (Sign Out)"]
+        end
+
+        subgraph Mode1["Fix Repository Issues View"]
+            subgraph LeftCol["Pipeline Target (4 Cols)"]
+                RepoInput["Repository URL (GitHub)"]
+                BranchCmd["Branch & Test Command Inputs"]
+                StackInput["Failing Stack Trace Textarea"]
+                Presets["Presets: [Node.js] [Python] [Java Maven]"]
+                DispatchBtn["[> Dispatch Self-Heal Button]"]
+            end
+
+            subgraph RightCol["AST Call Hierarchy & Code Structure (8 Cols)"]
+                ASTBox["React Flow Interactive Canvas (Zoom / Pan / Minimap)\nDynamic Connected Sub-Graph with White Directional Arrows"]
+            end
+
+            subgraph BottomLeft["Live Execution Telemetry (6 Cols)"]
+                TerminalBox["Real-time SSE Terminal Stream\n[Critic Agent -> Coder Agent -> Sandbox Agent]"]
+            end
+
+            subgraph BottomRight["Synthesized Patch Review (6 Cols)"]
+                DiffHeader["Verified Status Badge (Sandbox Passed)"]
+                SummaryBox["Fix Technical Explanation"]
+                DiffGrid["[Original Defect Code] vs [Synthesized & Verified Patch]"]
+            end
+        end
+
+        subgraph Mode2["Chat With Repository View (Full Height)"]
+            ChatHeader["RepoChat Assistant (Context: Scoped Repo & Branch)"]
+            ChatStream["Multi-Turn Message Bubbles (User vs Assistant)"]
+            ChatInputBar["Question Input Field + Send Button"]
+        end
+    end

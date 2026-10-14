@@ -1,0 +1,31 @@
+flowchart TD
+    User["👤 Developer / QA Engineer"]
+    
+    UC1(["Register & Sign In (JWT Auth)"])
+    UC2(["Select Quick Preset (Node / Python / Java)"])
+    UC3(["Dispatch Self-Healing CI/CD Pipeline"])
+    UC4(["Inspect AST Call Hierarchy & Code Structure"])
+    UC5(["Monitor BullMQ Redis Worker Queues"])
+    UC6(["Review Redline Diff & Synthesized Patch"])
+    UC7(["Interactive RepoChat Q&A (gemini-3.1-flash-lite)"])
+
+    Docker["🐳 Docker (Node / Python / Maven)"]
+    Redis["📦 Redis BullMQ Queue"]
+    Mongo["🍃 MongoDB (Runs & Auth)"]
+    Gemini["🤖 Google Gemini 3.1 Flash Lite"]
+
+    User --- UC1
+    User --- UC2
+    User --- UC3
+    User --- UC4
+    User --- UC5
+    User --- UC6
+    User --- UC7
+
+    UC1 -.-> Mongo
+    UC3 -.-> Redis
+    UC3 -.-> Docker
+    UC4 -.-> Gemini
+    UC5 -.-> Redis
+    UC6 -.-> Mongo
+    UC7 -.-> Gemini

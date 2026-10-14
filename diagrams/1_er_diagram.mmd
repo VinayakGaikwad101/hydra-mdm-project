@@ -1,0 +1,73 @@
+erDiagram
+    USER ||--o{ ANALYSIS_RUN : triggers
+    USER ||--o{ CHAT_SESSION : conducts
+    ANALYSIS_RUN ||--o{ QUEUE_JOB : enqueued_as
+    ANALYSIS_RUN ||--|| SYNTHESIZED_PATCH : generates
+    ANALYSIS_RUN ||--o{ AST_NODE : contains
+    AST_NODE ||--o{ AST_LINK : connects
+
+    USER {
+        string _id PK
+        string name
+        string email UK
+        string password
+        string avatar
+        datetime createdAt
+    }
+
+    ANALYSIS_RUN {
+        string _id PK
+        string userId FK
+        string repositoryUrl
+        string branch
+        string testCommand
+        string status
+        string errorLog
+        string failingFile
+        int lineNumber
+        datetime createdAt
+    }
+
+    SYNTHESIZED_PATCH {
+        string _id PK
+        string runId FK
+        string explanation
+        string targetContent
+        string replacementContent
+        boolean sandboxVerified
+        int exitCode
+    }
+
+    AST_NODE {
+        string id PK
+        string runId FK
+        string name
+        string type
+        int line
+    }
+
+    AST_LINK {
+        string id PK
+        string caller
+        string callee
+        int line
+    }
+
+    QUEUE_JOB {
+        string id PK
+        string runId FK
+        string queueName
+        string status
+        datetime processedOn
+        datetime finishedOn
+    }
+
+    CHAT_SESSION {
+        string id PK
+        string userId FK
+        string repoUrl
+        string branch
+        string role
+        string content
+        datetime createdAt
+    }

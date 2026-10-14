@@ -1,0 +1,75 @@
+classDiagram
+    class User {
+        +string id
+        +string name
+        +string email
+        +string password
+        +register(name, email, password)
+        +login(email, password)
+    }
+
+    class AnalysisRun {
+        +string id
+        +string repositoryUrl
+        +string branch
+        +string testCommand
+        +string status
+        +string failingFile
+        +int lineNumber
+        +string errorLog
+    }
+
+    class CriticAgent {
+        +runCritic(stackTrace, workspacePath) CriticOutput
+        -matchStackCoordinates(trace) Coords
+    }
+
+    class ASTEngine {
+        +getASTAnalysis(filePath) ASTAnalysisResult
+        -parseBabel(jsCode) Symbol[]
+        -parsePython(pyCode) Symbol[]
+        -parseJava(javaCode) Symbol[]
+    }
+
+    class CoderAgent {
+        +runCoder(file, line, summary, git, workspace) CoderOutput
+        -synthesizePatch(prompt) Patch
+    }
+
+    class SandboxAgent {
+        +runSandbox(workspace, file, patch, cmd) SandboxOutput
+        -selectImage(testCmd) string
+        -executeDocker(image, cmd) int
+    }
+
+    class GeminiService {
+        -KeyRotator keyRotator
+        -string modelName
+        +getInstance() GeminiService
+        +getModel(apiKey, temp) ChatGoogleGenerativeAI
+        +getKeyRotator() KeyRotator
+    }
+
+    class KeyRotator {
+        -string[] keys
+        -int currentIndex
+        +getActiveKey() string
+        +rotateToNextKey(reason) string
+        +getMaskedKey() string
+    }
+
+    class PipelineQueue {
+        +add(name, data) Job
+        +getJobCounts() Counts
+        +subscribeLogs(runId, cb)
+    }
+
+    User "1" --> "*" AnalysisRun : initiates
+    AnalysisRun "1" --> "1" PipelineQueue : enqueues
+    PipelineQueue --> CriticAgent : invokes
+    CriticAgent --> ASTEngine : analyzes
+    ASTEngine --> CoderAgent : supplies symbols
+    CoderAgent --> SandboxAgent : verifies
+    CoderAgent ..> GeminiService : rotates keys
+    CriticAgent ..> GeminiService : rotates keys
+    GeminiService *-- KeyRotator

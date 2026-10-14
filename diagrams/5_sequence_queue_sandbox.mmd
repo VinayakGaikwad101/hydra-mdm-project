@@ -1,0 +1,29 @@
+sequenceDiagram
+    autonumber
+    actor Dev as Developer / CI Trigger
+    participant UI as Next.js Dashboard
+    participant API as Express API Server
+    participant Redis as Redis BullMQ Broker
+    participant Worker as BullMQ Pipeline Worker
+    participant Sandbox as Docker Engine
+    participant SSE as SSE Streamer
+
+    Dev->>UI: Dispatch Self-Heal Pipeline
+    UI->>API: POST /api/pipeline/dispatch
+    API->>Redis: pipelineQueue.add("run-pipeline", payload)
+    API-->>UI: Return runId & initiate SSE subscription
+    
+    UI->>API: GET /api/pipeline/stream/:runId
+    API->>SSE: Open Server-Sent Events stream
+    
+    Redis->>Worker: Job dequeued for processing
+    Worker->>SSE: emitPipelineLog("Running Critic Agent...")
+    SSE-->>UI: Real-time telemetry log chunk
+    
+    Worker->>Sandbox: Stage container execution (node/python/maven)
+    Sandbox->>Sandbox: Isolated test suite verification
+    Sandbox-->>Worker: Exit status code 0 (Pass)
+    
+    Worker->>SSE: emitPipelineLog("Test suite PASSED in Docker sandbox!")
+    Worker->>SSE: emitEvent("agent_end", { sandbox: completed })
+    SSE-->>UI: Display verified status badge & synthesized patch

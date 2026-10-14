@@ -1,0 +1,27 @@
+sequenceDiagram
+    autonumber
+    actor Dev as Developer
+    participant UI as Next.js Dashboard
+    participant API as Express API Server
+    participant Gemini as GeminiService (KeyRotator)
+    participant LLM as Google Gemini 3.1 Flash Lite
+
+    Dev->>UI: Select Mode: "Chat With Repository"
+    Dev->>UI: Submit inquiry regarding architecture or bug
+    UI->>API: POST /api/repo/chat (repoUrl, branch, message, history)
+    
+    API->>Gemini: Request active model with rotation
+    Gemini->>Gemini: Check active key in 6-key pool
+    
+    API->>LLM: invoke([SystemMessage, History, HumanMessage])
+    
+    alt Upstream 503 / High Demand
+        LLM-->>API: 503 Service Unavailable / Spike
+        API->>Gemini: rotateToNextKey("RepoChat 503")
+        Gemini-->>API: Switched to next key slot
+        API->>LLM: Retry invoke with backup key
+    end
+    
+    LLM-->>API: Return markdown architectural guidance & snippets
+    API-->>UI: 200 OK { success: true, reply }
+    UI-->>Dev: Display assistant response with code formatting

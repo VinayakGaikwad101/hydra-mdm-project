@@ -1,0 +1,38 @@
+stateDiagram-v2
+    [*] --> Idle: Platform Launched
+
+    state "Mode Selection" as SelectMode
+    Idle --> SelectMode: User Chooses Workflow
+
+    state "Fix Repository Issues" as FixMode {
+        [*] --> InputTarget: Enter Repo URL, Branch & Stack Trace
+        InputTarget --> EnqueueJob: Click Dispatch Self-Heal
+        EnqueueJob --> CriticAnalysis: BullMQ Worker Dequeues
+        CriticAnalysis --> ASTExtraction: Fault File & Line Isolated
+        ASTExtraction --> PatchSynthesis: Multi-Language Symbols Parsed
+        PatchSynthesis --> DockerSandbox: Coder Generates Clean Hunk
+        
+        state DockerSandbox {
+            [*] --> PullImage
+            PullImage --> RunTestSuite
+            RunTestSuite --> CheckExitCode
+        }
+
+        CheckExitCode --> SandboxPassed: Status Code 0
+        CheckExitCode --> SandboxFailed: Status Code Non-Zero
+        SandboxPassed --> ReviewPatch: Render Code Diff
+        SandboxFailed --> RetrySynthesis: Fallback / Diagnostics
+        RetrySynthesis --> PatchSynthesis
+    }
+
+    state "Chat With Repository" as ChatMode {
+        [*] --> EnterInquiry: User Submits Question
+        EnterInquiry --> LLMContext: Inject Repo & Branch Scope
+        LLMContext --> RotateKey: Failover on 503 / Limit
+        RotateKey --> RenderAnswer: Markdown Code Explanation
+        RenderAnswer --> EnterInquiry: Multi-Turn Conversation
+    }
+
+    SelectMode --> FixMode
+    SelectMode --> ChatMode
+    ReviewPatch --> [*]
