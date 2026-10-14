@@ -76,12 +76,19 @@ ${fileContent}
 2. Provide 'targetContent' which must match the original file text EXACTLY (including original whitespace/indentation).
 3. Provide 'replacementContent' with the clean bugfix applied.
 4. Do not rewrite unrelated functions. Keep changes localized.
+5. Provide a semantic call-graph hierarchy ('astNodes' and 'astLinks') that models the key functions, callers, and classes involved in this code path so developers can visualize the execution flow.
 
 Respond strictly in valid JSON without backticks:
 {
   "explanation": "Clear explanation of how this patch fixes the defect",
   "targetContent": "exact original code chunk to replace",
-  "replacementContent": "new replacement code chunk"
+  "replacementContent": "new replacement code chunk",
+  "astNodes": [
+    { "name": "functionOrClass()", "type": "function", "line": 1 }
+  ],
+  "astLinks": [
+    { "caller": "callerFunction", "callee": "calleeFunction", "line": 1 }
+  ]
 }`;
 
   while (attempt < maxRetries) {
@@ -117,12 +124,36 @@ Respond strictly in valid JSON without backticks:
         logMessage += `✓ Synthesized verified patch chunk (${parsed.replacementContent.split("\n").length} line(s)).\n`;
       }
 
+      // Merge AST: Use parser's exact AST if plentiful, or enrich with Gemini's reasoning graph
+      let finalNodes = astReport.nodes;
+      let finalLinks = astReport.links;
+
+      if (finalNodes.length < 2 && Array.isArray(parsed.astNodes) && parsed.astNodes.length > 0) {
+        logMessage += `✓ Enriched AST Call Graph with ${parsed.astNodes.length} semantic execution node(s).\n`;
+        const existingNames = new Set(finalNodes.map((n) => n.name));
+        const mergedNodes = [...finalNodes];
+        parsed.astNodes.forEach((n: any) => {
+          if (n && n.name && !existingNames.has(n.name)) {
+            mergedNodes.push({
+              name: String(n.name),
+              type: n.type === "class" ? "class" : n.type === "variable" ? "variable" : "function",
+              line: Number(n.line) || lineNumber || 1,
+            });
+            existingNames.add(n.name);
+          }
+        });
+        finalNodes = mergedNodes;
+        if (Array.isArray(parsed.astLinks) && parsed.astLinks.length > 0) {
+          finalLinks = [...finalLinks, ...parsed.astLinks];
+        }
+      }
+
       return {
         explanation: parsed.explanation || "Automated bugfix generated.",
         targetContent: parsed.targetContent,
         replacementContent: parsed.replacementContent,
-        astNodes: astReport.nodes,
-        astLinks: astReport.links,
+        astNodes: finalNodes,
+        astLinks: finalLinks,
         logMessage,
       };
     } catch (err: any) {
