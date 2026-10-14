@@ -1,0 +1,8 @@
+{
+  "name": "node-target",
+  "version": "1.0.0",
+  "main": "src/calculator.js",
+  "scripts": {
+    "test": "node test/calculator.test.js"
+  }
+}
