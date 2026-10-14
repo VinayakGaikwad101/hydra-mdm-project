@@ -1,0 +1,38 @@
+sequenceDiagram
+    autonumber
+    actor User as Developer / CI Runner
+    participant UI as Next.js Dashboard
+    participant API as Express API Server
+    participant Queue as BullMQ (Redis)
+    participant Worker as Background Worker
+    participant Critic as Critic Agent
+    participant AST as AST Engine
+    participant Coder as Coder Agent (Gemini 3.1)
+    participant Sandbox as Docker Sandbox
+    participant Mongo as MongoDB
+
+    User->>UI: Dispatch Self-Heal (Repo, Branch, Trace)
+    UI->>API: POST /api/pipeline/dispatch
+    API->>Mongo: Create AnalysisRun (QUEUED)
+    API->>Queue: Add job to 'hydra-pipeline-queue'
+    API-->>UI: Return runId & connect SSE stream
+    
+    Queue->>Worker: Pick up job
+    Worker->>Critic: Analyze Stack Trace
+    Critic->>Critic: Extract File & Line Coordinates
+    Critic-->>Worker: Target isolated (e.g., calculator.js:5)
+    
+    Worker->>AST: Parse file symbols & call graph
+    AST-->>Worker: Nodes & Links hierarchy
+    
+    Worker->>Coder: Synthesize minimal verified patch
+    Coder->>Coder: KeyRotator invoke gemini-3.1-flash-lite
+    Coder-->>Worker: targetContent + replacementContent
+    
+    Worker->>Sandbox: Apply patch and run test command
+    Sandbox->>Sandbox: Spin up Docker container (node / python / maven)
+    Sandbox-->>Worker: Exit Code 0 (Test Suite Passed)
+    
+    Worker->>Mongo: Update AnalysisRun (COMPLETED)
+    Worker-->>UI: SSE Event: Pipeline COMPLETED + Patch Review
+    UI-->>User: Render Verified Patch & AST Call Graph

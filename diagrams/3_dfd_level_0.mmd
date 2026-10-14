@@ -1,0 +1,19 @@
+flowchart LR
+    Dev["Developer / CI System"]
+    
+    subgraph HYDRA["HYDRA Autonomous CI/CD Platform (0.0)"]
+        Engine["Fault Localization, AST Reasoning, Patch Synthesis & Sandbox Verification Engine"]
+    end
+    
+    DockerHost["Docker Engine\n(Sandboxes)"]
+    GeminiAPI["Google Gemini 3.1 Flash Lite API\n(Multi-Key Pool)"]
+    MongoStore[("MongoDB Database")]
+    RedisStore[("Redis Queue Broker")]
+    
+    Dev -->|Repository URL, Branch, Stack Trace| Engine
+    Engine -->|Sandbox Verified Patch, Telemetry, AST Graph| Dev
+    
+    Engine <-->|Job Dispatch & Real-Time Metrics| RedisStore
+    Engine <-->|Runs History & Auth Sessions| MongoStore
+    Engine <-->|LLM Diagnostics & Code Generation| GeminiAPI
+    Engine <-->|Containerized Test Execution| DockerHost

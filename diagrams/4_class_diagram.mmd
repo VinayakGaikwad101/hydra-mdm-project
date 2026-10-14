@@ -1,0 +1,52 @@
+classDiagram
+    class GeminiService {
+        -KeyRotator keyRotator
+        -string modelName
+        +getInstance() GeminiService
+        +getModel(apiKey, temp) ChatGoogleGenerativeAI
+        +getKeyRotator() KeyRotator
+    }
+
+    class KeyRotator {
+        -string[] keys
+        -number currentIndex
+        +getActiveKey() string
+        +rotateToNextKey(reason) string
+        +getMaskedKey() string
+    }
+
+    class CriticAgent {
+        +runCritic(stackTrace, workspacePath) CriticOutput
+        -extractCoordinates(trace) Match
+    }
+
+    class ASTEngine {
+        +getASTAnalysis(filePath) ASTAnalysisResult
+        -parseBabel(jsCode) ASTReport
+        -parsePython(pyCode) ASTReport
+        -parseJava(javaCode) ASTReport
+    }
+
+    class CoderAgent {
+        +runCoder(failingFile, line, summary, git, workspace) CoderOutput
+        -synthesizePatch(prompt) PatchJSON
+    }
+
+    class SandboxAgent {
+        +runSandbox(workspace, file, patch, cmd) SandboxOutput
+        -selectDockerImage(manifest) string
+        -executeContainer(image, cmd) ExitCode
+    }
+
+    class PipelineQueue {
+        +add(jobName, data) Job
+        +getJobCounts() JobCounts
+    }
+
+    GeminiService *-- KeyRotator
+    CriticAgent ..> GeminiService : invokes
+    CoderAgent ..> GeminiService : invokes
+    CoderAgent ..> ASTEngine : consumes symbols
+    PipelineQueue --> CriticAgent : triggers
+    PipelineQueue --> CoderAgent : triggers
+    PipelineQueue --> SandboxAgent : triggers

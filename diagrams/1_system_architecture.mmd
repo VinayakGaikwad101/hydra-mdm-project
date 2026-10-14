@@ -1,0 +1,63 @@
+flowchart TD
+    subgraph ClientLayer["Presentation Layer (Client)"]
+        UI["Next.js 16 Web Dashboard"]
+        TargetForm["Pipeline Target & Preset Inputs"]
+        ASTCanvas["React Flow AST Visualizer"]
+        DiffReview["Synthesized Patch Review"]
+        RepoChat["RepoChat Interactive Assistant"]
+        QueueModal["BullMQ Worker Queues Modal"]
+
+        TargetForm --> UI
+        ASTCanvas --> UI
+        DiffReview --> UI
+        RepoChat --> UI
+        QueueModal --> UI
+    end
+
+    subgraph APILayer["API Gateway & Agent Orchestrator (Node.js/Express)"]
+        Express["Express.js Server (Port 5001)"]
+        JWTAuth["JWT Authentication"]
+        KeyRotator["Gemini KeyRotator (6-Key Pool)"]
+        BullMQQueue["BullMQ Queue ('hydra-pipeline-queue')"]
+        SSEStream["SSE Live Log Streamer"]
+
+        Express --> JWTAuth
+        Express --> KeyRotator
+        Express --> BullMQQueue
+        Express --> SSEStream
+    end
+
+    subgraph AgentPipeline["Autonomous Multi-Agent Pipeline"]
+        Critic["Critic Agent (Stack Trace Localization)"]
+        ASTParser["Multi-Language AST Engine (JS, Py, Java)"]
+        Coder["Coder Agent (Patch Synthesis)"]
+        Sandbox["QA Sandbox Agent (Docker Verification)"]
+
+        Critic --> ASTParser
+        ASTParser --> Coder
+        Coder --> Sandbox
+    end
+
+    subgraph DataStorage["Storage & Execution Engine (Docker Engine)"]
+        Mongo[("MongoDB (Runs & Auth)")]
+        Redis[("Redis Streams (BullMQ)")]
+        DockerNode["node:20-alpine Sandbox"]
+        DockerPy["python:3.11-alpine Sandbox"]
+        DockerJava["maven:3.9-eclipse-temurin-17 Sandbox"]
+
+        Sandbox --> DockerNode
+        Sandbox --> DockerPy
+        Sandbox --> DockerJava
+    end
+
+    subgraph ExternalServices["External LLM Cloud"]
+        GeminiFlash["Google Gemini 3.1 Flash Lite"]
+    end
+
+    UI --> Express
+    BullMQQueue --> AgentPipeline
+    Critic --> KeyRotator
+    Coder --> KeyRotator
+    KeyRotator --> GeminiFlash
+    Express --> Mongo
+    Express --> Redis
