@@ -104,6 +104,37 @@ export function getASTAnalysis(filePath: string): ASTAnalysisResult {
           });
           currentScope = fullName;
         },
+        AssignmentExpression(nodePath: any) {
+          const left = nodePath.node.left;
+          const right = nodePath.node.right;
+          // module.exports = function(...) { ... } or exports.foo = ...
+          if (
+            (left.type === "MemberExpression" &&
+              ((left.object?.name === "module" && left.property?.name === "exports") ||
+                left.object?.name === "exports")) &&
+            (right.type === "FunctionExpression" || right.type === "ArrowFunctionExpression")
+          ) {
+            const funcName = right.id?.name || (left.property?.name !== "exports" ? left.property?.name : "module.exports");
+            nodes.push({
+              name: funcName,
+              type: "function",
+              line: nodePath.node.loc?.start.line || 1,
+            });
+            currentScope = funcName;
+          }
+        },
+        ExportDefaultDeclaration(nodePath: any) {
+          const decl = nodePath.node.declaration;
+          if (decl.type === "FunctionDeclaration" || decl.type === "ArrowFunctionExpression" || decl.type === "FunctionExpression") {
+            const name = decl.id?.name || "defaultExport";
+            nodes.push({
+              name,
+              type: "function",
+              line: nodePath.node.loc?.start.line || 1,
+            });
+            currentScope = name;
+          }
+        },
         VariableDeclarator(nodePath: any) {
           const init = nodePath.node.init;
           if (init && (init.type === "ArrowFunctionExpression" || init.type === "FunctionExpression")) {

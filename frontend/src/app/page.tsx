@@ -83,7 +83,20 @@ export default function HydraDashboard() {
     if (isRunning) return;
     setIsRunning(true);
     setLogs(["[Hydra Client] Initiating pipeline dispatch to BullMQ worker..."]);
-    setRunResult((prev) => ({ ...prev, status: "running" }));
+    // Immediately clear previous run results, AST, and patches
+    setRunResult({
+      runId: "",
+      status: "running",
+      astNodes: [],
+      astLinks: [],
+      failingFile: undefined,
+      lineNumber: undefined,
+      errorSummary: undefined,
+      explanation: undefined,
+      targetContent: undefined,
+      replacementContent: undefined,
+      testLogs: undefined,
+    });
 
     try {
       const res = await fetch(`${BACKEND_URL}/api/pipeline/dispatch`, {
