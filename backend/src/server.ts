@@ -241,6 +241,62 @@ app.get("/api/runs", async (req, res) => {
   }
 });
 
+// Interactive Repository Chat Endpoint (Chat With Repository)
+app.post("/api/repo/chat", async (req, res) => {
+  try {
+    const { repoUrl, branch = "main", message, history = [] } = req.body;
+    if (!message) {
+      return res.status(400).json({ success: false, error: "Message is required." });
+    }
+
+    const { GeminiService } = await import("./services/geminiService.js");
+    const { SystemMessage, HumanMessage, AIMessage } = await import("@langchain/core/messages");
+
+    const gemini = GeminiService.getInstance();
+    const keyRotator = gemini.getKeyRotator();
+    const activeKey = keyRotator.getActiveKey();
+
+    if (!activeKey) {
+      return res.status(500).json({ success: false, error: "No active Gemini API key found." });
+    }
+
+    const systemPrompt = `You are HYDRA RepoChat, an expert AI software engineer assistant paired with the user's repository (${repoUrl} on branch ${branch}).
+You answer technical architectural questions, diagnose bug root causes, explain code structures, and suggest surgical refactorings.
+Keep your answers concise, practical, technical, and formatted in clean GitHub markdown with code snippets.`;
+
+    const formattedMessages: any[] = [new SystemMessage(systemPrompt)];
+    if (Array.isArray(history)) {
+      history.slice(-8).forEach((h: any) => {
+        if (h.role === "user") formattedMessages.push(new HumanMessage(h.content));
+        if (h.role === "assistant") formattedMessages.push(new AIMessage(h.content));
+      });
+    }
+    formattedMessages.push(new HumanMessage(message));
+
+    let attempt = 0;
+    const maxRetries = Math.min(keyRotator.totalKeys() || 1, 3);
+    let reply = "";
+
+    while (attempt < maxRetries) {
+      attempt++;
+      try {
+        const key = keyRotator.getActiveKey() || activeKey;
+        const model = gemini.getModel(key, 0.4);
+        const response = await model.invoke(formattedMessages);
+        reply = typeof response.content === "string" ? response.content : JSON.stringify(response.content);
+        break;
+      } catch (err: any) {
+        keyRotator.rotateToNextKey("RepoChat 503/Quota");
+        if (attempt >= maxRetries) throw err;
+      }
+    }
+
+    return res.json({ success: true, reply });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Server-Sent Events (SSE) log stream for real-time live terminal output
 app.get("/api/pipeline/stream/:runId", (req, res) => {
   const { runId } = req.params;

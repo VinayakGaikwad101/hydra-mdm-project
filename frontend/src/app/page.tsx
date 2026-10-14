@@ -13,6 +13,11 @@ import {
   LogOut,
   FileCode2,
   Cpu,
+  MessageSquare,
+  Wrench,
+  Send,
+  Bot,
+  User as UserIcon,
 } from "lucide-react";
 import { ASTVisualizer } from "@/components/ASTVisualizer";
 import { Spinner, Skeleton } from "@/components/ui/Feedback";
@@ -57,6 +62,15 @@ export default function HydraDashboard() {
     astLinks: [],
   });
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
+  const [activeMode, setActiveMode] = useState<"fix" | "chat">("fix");
+  const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([
+    {
+      role: "assistant",
+      content: "Hello! I am your HYDRA Repository Assistant. You can ask me questions about this codebase's architecture, dependencies, algorithms, or how to diagnose a bug.",
+    },
+  ]);
+  const [chatInput, setChatInput] = useState("");
+  const [isSendingChat, setIsSendingChat] = useState(false);
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
@@ -203,6 +217,32 @@ export default function HydraDashboard() {
           </div>
         </div>
 
+        {/* 2 Modes: Fix Repository Issues vs Chat With Repository */}
+        <div className="flex items-center p-1 bg-slate-900/90 border border-slate-800 rounded-xl">
+          <button
+            onClick={() => setActiveMode("fix")}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeMode === "fix"
+                ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Wrench className="w-3.5 h-3.5" />
+            <span>Fix Repository Issues</span>
+          </button>
+          <button
+            onClick={() => setActiveMode("chat")}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeMode === "chat"
+                ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Chat With Repository</span>
+          </button>
+        </div>
+
         <div className="flex items-center gap-3">
           {/* BullMQ Live Queue Inspector Button - Prominent Account-Style Pill */}
           <button
@@ -253,11 +293,148 @@ export default function HydraDashboard() {
 
       {/* Main Container */}
       <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto space-y-6">
-        {/* Top Split: Configuration & AST Visualizer */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Pipeline Targets (4 Cols) */}
-          <div className="lg:col-span-4 bg-[#111827] border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        {activeMode === "chat" ? (
+          /* Mode 2: Chat With Repository */
+          <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col h-[750px] space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <Bot className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    HYDRA RepoChat Assistant
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800">
+                      gemini-3.1-flash-lite
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-400 font-mono">
+                    Context: <span className="text-blue-400">{repoUrl}</span> ({branch})
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() =>
+                  setChatMessages([
+                    {
+                      role: "assistant",
+                      content: "Chat cleared. Ask me anything about this repository's structure or code.",
+                    },
+                  ])
+                }
+                className="text-xs font-mono text-slate-400 hover:text-white px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                Clear History
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto space-y-4 p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 scrollbar-thin">
+              {chatMessages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  {msg.role === "assistant" && (
+                    <div className="h-7 w-7 rounded-lg bg-blue-600/30 border border-blue-500/40 text-blue-300 flex items-center justify-center shrink-0">
+                      <Bot className="h-4 w-4" />
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${
+                      msg.role === "user"
+                        ? "bg-blue-600 text-white rounded-br-none"
+                        : "bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none font-mono whitespace-pre-wrap"
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                  {msg.role === "user" && (
+                    <div className="h-7 w-7 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center shrink-0">
+                      <UserIcon className="h-4 w-4" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {isSendingChat && (
+                <div className="flex gap-3 items-center text-xs text-slate-400 font-mono">
+                  <div className="h-7 w-7 rounded-lg bg-blue-600/30 border border-blue-500/40 text-blue-300 flex items-center justify-center shrink-0">
+                    <Bot className="h-4 w-4" />
+                  </div>
+                  <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center gap-2">
+                    <Spinner size="sm" />
+                    <span>Analyzing repository & generating reply...</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Chat Input Bar */}
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!chatInput.trim() || isSendingChat) return;
+                const userMsg = chatInput.trim();
+                setChatInput("");
+                setChatMessages((prev) => [...prev, { role: "user", content: userMsg }]);
+                setIsSendingChat(true);
+
+                try {
+                  const res = await fetch(`${BACKEND_URL}/api/repo/chat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      repoUrl,
+                      branch,
+                      message: userMsg,
+                      history: chatMessages,
+                    }),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    setChatMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+                  } else {
+                    setChatMessages((prev) => [
+                      ...prev,
+                      { role: "assistant", content: `⚠ Error: ${data.error || "Could not generate reply."}` },
+                    ]);
+                  }
+                } catch (err: any) {
+                  setChatMessages((prev) => [
+                    ...prev,
+                    { role: "assistant", content: `❌ Network error: ${err.message}` },
+                  ]);
+                } finally {
+                  setIsSendingChat(false);
+                }
+              }}
+              className="flex items-center gap-3"
+            >
+              <input
+                type="text"
+                placeholder={`Ask a question about ${repoUrl.split("/").pop() || "this repository"}...`}
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                className="flex-1 px-4 py-3 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 font-mono transition-all"
+              />
+              <button
+                type="submit"
+                disabled={isSendingChat || !chatInput.trim()}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md shadow-blue-500/20 disabled:opacity-50 transition-all cursor-pointer"
+              >
+                <Send className="w-4 h-4" />
+                <span>Send</span>
+              </button>
+            </form>
+          </div>
+        ) : (
+          /* Mode 1: Fix Repository Issues (Existing Platform Screen) */
+          <>
+            {/* Top Split: Configuration & AST Visualizer */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Pipeline Targets (4 Cols) */}
+              <div className="lg:col-span-4 bg-[#111827] border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <FileCode2 className="h-4 w-4 text-blue-500" />
                 <h2 className="text-sm font-bold uppercase tracking-wider text-slate-200">
@@ -526,7 +703,9 @@ export default function HydraDashboard() {
             )}
           </div>
         </div>
-      </main>
-    </div>
+      </>
+    )}
+  </main>
+</div>
   );
 }
