@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc && cp src/parser/parse_ast.py dist/parser/ 2>/dev/null || xcopy /y /i src\\parser\\parse_ast.py dist\\parser\\ 2>nul || copy src\\parser\\parse_ast.py dist\\parser\\ 2>nul || true",
     "start": "node dist/server.js",
-    "dev": "tsx watch src/server.ts"
+    "dev": "node src/config/docker-init.js && tsx watch src/server.ts"
   },
   "dependencies": {
     "@babel/parser": "^7.26.9",
