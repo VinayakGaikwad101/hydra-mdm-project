@@ -204,25 +204,6 @@ export default function HydraDashboard() {
               <LogOut className="h-3.5 w-3.5" />
             </button>
           </div>
-
-          {/* Dispatch Button */}
-          <button
-            onClick={handleRunPipeline}
-            disabled={isRunning}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-md shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {isRunning ? (
-              <>
-                <Spinner size="sm" className="border-white" />
-                <span>Running Pipeline...</span>
-              </>
-            ) : (
-              <>
-                <Play className="h-3.5 w-3.5 fill-current" />
-                <span>Dispatch Self-Heal</span>
-              </>
-            )}
-          </button>
         </div>
       </header>
 
@@ -345,6 +326,25 @@ export default function HydraDashboard() {
                 </button>
               </div>
             </div>
+
+            {/* Prominent Dispatch Button right below the form */}
+            <button
+              onClick={handleRunPipeline}
+              disabled={isRunning}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all disabled:opacity-50 mt-2"
+            >
+              {isRunning ? (
+                <>
+                  <Spinner size="sm" className="border-white" />
+                  <span>Running Self-Healing Pipeline...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 fill-current" />
+                  <span>Dispatch Self-Heal</span>
+                </>
+              )}
+            </button>
           </div>
 
           {/* Right Column: AST Call Hierarchy (8 Cols) */}

@@ -33,10 +33,10 @@ class KeyRotator {
     return `${active.substring(0, 6)}...${active.substring(active.length - 4)}`;
   }
 
-  public rotateToNextKey(): string | null {
+  public rotateToNextKey(reason: string = "quota/rate-limit/503"): string | null {
     if (this.keys.length <= 1) return this.getActiveKey();
     this.currentIndex = (this.currentIndex + 1) % this.keys.length;
-    console.warn(`[KeyRotator] 429 quota or rate-limit hit. Rotated to Key Slot #${this.currentIndex + 1} (${this.getMaskedKey()})`);
+    console.warn(`[KeyRotator] ${reason} triggered rotation to Key Slot #${this.currentIndex + 1} (${this.getMaskedKey()})`);
     return this.getActiveKey();
   }
 

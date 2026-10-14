@@ -32,20 +32,6 @@ interface ASTVisualizerProps {
   targetFunction?: string;
 }
 
-// Default pre-drawn AST structure for instant preview
-const DEMO_NODES: ASTNodeData[] = [
-  { name: "average(arr)", type: "function", line: 1 },
-  { name: "Array.reduce()", type: "function", line: 3 },
-  { name: "Array.length", type: "variable", line: 4 },
-  { name: "calculator.test.js", type: "function", line: 12 },
-];
-
-const DEMO_LINKS: ASTLinkData[] = [
-  { caller: "calculator.test.js", callee: "average(arr)", line: 12 },
-  { caller: "average(arr)", callee: "Array.reduce()", line: 3 },
-  { caller: "average(arr)", callee: "Array.length", line: 4 },
-];
-
 function CustomASTNode({ data }: { data: ASTNodeData & { isTarget?: boolean } }) {
   const getBadgeColor = () => {
     switch (data.type) {
@@ -91,11 +77,11 @@ const nodeTypes = {
 };
 
 export function ASTVisualizer({ nodes = [], links = [], targetFunction }: ASTVisualizerProps) {
-  // Use parsed nodes, or fallback to the pre-drawn AST structure
-  const activeNodes = nodes.length > 0 ? nodes : DEMO_NODES;
-  const activeLinks = links.length > 0 ? links : DEMO_LINKS;
+  const activeNodes = nodes;
+  const activeLinks = links;
 
   const flowNodes: Node[] = useMemo(() => {
+    if (activeNodes.length === 0) return [];
     const cols = Math.min(3, Math.max(2, Math.ceil(Math.sqrt(activeNodes.length))));
     const xGap = 210;
     const yGap = 120;
@@ -128,11 +114,25 @@ export function ASTVisualizer({ nodes = [], links = [], targetFunction }: ASTVis
     }));
   }, [activeLinks]);
 
+  if (activeNodes.length === 0) {
+    return (
+      <div className="h-full w-full relative bg-[#0b0f19] flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="h-12 w-12 rounded-2xl bg-blue-950/40 border border-blue-900/40 flex items-center justify-center mb-3 text-blue-400">
+          <Layers className="w-6 h-6 opacity-80" />
+        </div>
+        <p className="text-xs font-semibold text-slate-300 mb-1">AST Symbol Call Graph</p>
+        <p className="text-[11px] text-slate-500 max-w-[280px]">
+          Dispatch a run to dynamically extract functions, AST nodes, and call hierarchies from the codebase.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full relative bg-[#0b0f19]">
       <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 bg-slate-900/90 backdrop-blur rounded-lg border border-slate-800 text-[11px] font-mono text-slate-300 shadow-md">
         <Layers className="w-3.5 h-3.5 text-blue-400" />
-        <span>{nodes.length > 0 ? "AST Live Hierarchy" : "AST Symbol Call Graph"}</span>
+        <span>AST Live Hierarchy</span>
       </div>
 
       <ReactFlow
@@ -146,6 +146,7 @@ export function ASTVisualizer({ nodes = [], links = [], targetFunction }: ASTVis
         elementsSelectable={false}
         minZoom={0.4}
         maxZoom={1.5}
+        proOptions={{ hideAttribution: true }}
       >
         <Background color="#1e293b" gap={16} />
         <Controls className="!bg-slate-900 !border-slate-800 !text-white !rounded-xl !overflow-hidden !shadow-lg" />

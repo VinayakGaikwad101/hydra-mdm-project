@@ -127,10 +127,21 @@ Respond strictly in valid JSON without backticks:
       };
     } catch (err: any) {
       const errMsg = err?.message || String(err);
-      if (errMsg.includes("429") || errMsg.includes("quota") || errMsg.includes("ResourceExhausted")) {
-        logMessage += `⚠ 429 quota reached on key. Rotating key slot...\n`;
-        keyRotator.rotateToNextKey();
-        await new Promise((r) => setTimeout(r, 1000 * attempt));
+      const isRecoverable =
+        errMsg.includes("429") ||
+        errMsg.includes("quota") ||
+        errMsg.includes("ResourceExhausted") ||
+        errMsg.includes("503") ||
+        errMsg.includes("500") ||
+        errMsg.includes("502") ||
+        errMsg.includes("high demand") ||
+        errMsg.includes("Service Unavailable") ||
+        errMsg.includes("overloaded");
+
+      if (isRecoverable) {
+        logMessage += `⚠ Provider transient status (${errMsg.slice(0, 70)}...). Rotating to next API key...\n`;
+        keyRotator.rotateToNextKey("Transient error / 503 / Quota");
+        await new Promise((r) => setTimeout(r, 1200 * attempt));
         continue;
       }
       logMessage += `❌ Coder synthesis error: ${errMsg}\n`;
