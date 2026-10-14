@@ -103,9 +103,16 @@ ALL TESTS PASSED!
 
   if (isPython) {
     dockerImage = "python:3.11-alpine";
-    installCmd = fs.existsSync(path.join(workspacePath, "requirements.txt"))
-      ? "pip install -r requirements.txt --quiet && "
-      : "";
+    let pipDeps = "";
+    if (fs.existsSync(path.join(workspacePath, "requirements.txt"))) {
+      pipDeps += "pip install -r requirements.txt --quiet && ";
+    } else if (fs.existsSync(path.join(workspacePath, "pyproject.toml"))) {
+      pipDeps += "pip install -e . --quiet 2>/dev/null || true && ";
+    }
+    if (testCommand.includes("pytest")) {
+      pipDeps += "which pytest >/dev/null 2>&1 || pip install pytest --quiet && ";
+    }
+    installCmd = pipDeps;
   } else if (isJava) {
     dockerImage = "maven:3.9-eclipse-temurin-17";
   } else {

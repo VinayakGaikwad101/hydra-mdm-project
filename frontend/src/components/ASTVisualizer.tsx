@@ -10,6 +10,7 @@ import {
   Edge,
   Position,
   Handle,
+  MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Layers, Terminal } from "lucide-react";
@@ -82,9 +83,11 @@ export function ASTVisualizer({ nodes = [], links = [], targetFunction }: ASTVis
 
   const flowNodes: Node[] = useMemo(() => {
     if (activeNodes.length === 0) return [];
-    const cols = Math.min(3, Math.max(2, Math.ceil(Math.sqrt(activeNodes.length))));
-    const xGap = 210;
-    const yGap = 120;
+    // Dynamic column calculation based on total nodes to prevent cramped overlap
+    const count = activeNodes.length;
+    const cols = count > 30 ? 5 : count > 15 ? 4 : count > 6 ? 3 : 2;
+    const xGap = 320;
+    const yGap = 160;
 
     return activeNodes.map((node, i) => {
       const col = i % cols;
@@ -94,7 +97,7 @@ export function ASTVisualizer({ nodes = [], links = [], targetFunction }: ASTVis
       return {
         id: node.name,
         type: "astNode",
-        position: { x: col * xGap + 40, y: row * yGap + 40 },
+        position: { x: col * xGap + 60, y: row * yGap + 60 },
         data: {
           ...node,
           isTarget: Boolean(isTarget),
@@ -110,7 +113,13 @@ export function ASTVisualizer({ nodes = [], links = [], targetFunction }: ASTVis
       target: link.callee,
       type: "smoothstep",
       animated: true,
-      style: { stroke: "#3b82f6", strokeWidth: 1.5 },
+      style: { stroke: "#ffffff", strokeWidth: 2 },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 16,
+        height: 16,
+        color: "#ffffff",
+      },
     }));
   }, [activeLinks]);
 
