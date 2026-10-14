@@ -1,8 +1,8 @@
 import { Queue, Worker, Job } from "bullmq";
-import Redis from "ioredis";
+import { Redis } from "ioredis";
 import * as fs from "fs";
 import * as path from "path";
-import simpleGit from "simple-git";
+import { simpleGit } from "simple-git";
 import { runCritic } from "../agents/critic.js";
 import { runCoder } from "../agents/coder.js";
 import { runSandbox } from "../agents/sandbox.js";
