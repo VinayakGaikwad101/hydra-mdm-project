@@ -94,7 +94,7 @@ ALL TESTS PASSED!
       ? "pip install -r requirements.txt --quiet && "
       : "";
   } else if (fs.existsSync(path.join(workspacePath, "pom.xml"))) {
-    dockerImage = "maven:3.9-eclipse-temurin-17-alpine";
+    dockerImage = "maven:3.9-eclipse-temurin-17";
   } else if (fs.existsSync(path.join(workspacePath, "package.json"))) {
     dockerImage = "node:20-alpine";
     installCmd = "npm install --no-audit --no-fund --quiet && ";
