@@ -84,20 +84,35 @@ ALL TESTS PASSED!
   }
 
   // 3. Multi-language Docker Container Sandbox Detection
-  logMessage += "Inspecting repository manifest to select container image...\n";
+  logMessage += "Inspecting repository manifest and test command to select container image...\n";
   let dockerImage = "node:20-alpine";
   let installCmd = "";
 
-  if (fs.existsSync(path.join(workspacePath, "requirements.txt")) || fs.existsSync(path.join(workspacePath, "pyproject.toml"))) {
+  const isPython =
+    testCommand.includes("python") ||
+    testCommand.includes("pytest") ||
+    failingFile.endsWith(".py") ||
+    fs.existsSync(path.join(workspacePath, "requirements.txt")) ||
+    fs.existsSync(path.join(workspacePath, "pyproject.toml"));
+
+  const isJava =
+    testCommand.includes("mvn") ||
+    testCommand.includes("gradle") ||
+    failingFile.endsWith(".java") ||
+    fs.existsSync(path.join(workspacePath, "pom.xml"));
+
+  if (isPython) {
     dockerImage = "python:3.11-alpine";
     installCmd = fs.existsSync(path.join(workspacePath, "requirements.txt"))
       ? "pip install -r requirements.txt --quiet && "
       : "";
-  } else if (fs.existsSync(path.join(workspacePath, "pom.xml"))) {
+  } else if (isJava) {
     dockerImage = "maven:3.9-eclipse-temurin-17";
-  } else if (fs.existsSync(path.join(workspacePath, "package.json"))) {
+  } else {
     dockerImage = "node:20-alpine";
-    installCmd = "npm install --no-audit --no-fund --quiet && ";
+    if (fs.existsSync(path.join(workspacePath, "package.json"))) {
+      installCmd = "npm install --no-audit --no-fund --quiet && ";
+    }
   }
 
   logMessage += `Selected Sandbox Environment: ${dockerImage}\n`;

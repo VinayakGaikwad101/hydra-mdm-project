@@ -1,8 +1,12 @@
 import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
+import { fileURLToPath } from "url";
 import * as parser from "@babel/parser";
 import traverseModule from "@babel/traverse";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Handle Babel traverse default export differences across ESM/CJS
 const traverse = (traverseModule as any).default || traverseModule;
@@ -32,7 +36,8 @@ export function getASTAnalysis(filePath: string): ASTAnalysisResult {
   if (ext === ".py") {
     try {
       const parserScript = path.join(__dirname, "parse_ast.py");
-      const stdout = execSync(`python "${parserScript}" "${filePath}"`, { encoding: "utf-8" });
+      const pyCmd = process.platform === "win32" ? "python" : "python3";
+      const stdout = execSync(`${pyCmd} "${parserScript}" "${filePath}"`, { encoding: "utf-8" });
       return JSON.parse(stdout) as ASTAnalysisResult;
     } catch (err: any) {
       return { nodes: [], links: [], error: `Python AST parser failed: ${err.message}` };
