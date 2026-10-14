@@ -204,14 +204,24 @@ export default function HydraDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* BullMQ Live Queue Inspector Button */}
+          {/* BullMQ Live Queue Inspector Button - Prominent Account-Style Pill */}
           <button
             onClick={() => setIsQueueModalOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900/80 hover:bg-slate-800 text-xs text-slate-300 hover:text-white transition-all shadow-sm"
+            className="flex items-center gap-3 px-3.5 py-1.5 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-850 hover:border-blue-500/50 text-slate-200 transition-all shadow-md group cursor-pointer"
           >
-            <Cpu className="w-3.5 h-3.5 text-blue-400" />
-            <span className="font-mono text-[11px]">Worker Queues</span>
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div className="h-7 w-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center font-bold">
+              <Cpu className="h-4 w-4" />
+            </div>
+            <div className="text-left text-xs">
+              <div className="font-semibold text-slate-100 flex items-center gap-1.5">
+                <span>Worker Queues</span>
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono">BullMQ Redis Live</div>
+            </div>
           </button>
 
           {/* Authenticated User Info */}

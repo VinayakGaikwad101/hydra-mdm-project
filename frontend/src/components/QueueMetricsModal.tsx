@@ -99,14 +99,15 @@ export function QueueMetricsModal({
             <button
               onClick={fetchMetrics}
               disabled={loading}
-              title="Refresh Queue"
-              className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-all"
+              title="Refresh Queue Metrics"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-750 text-slate-300 hover:text-white transition-all text-xs font-mono disabled:opacity-50 cursor-pointer"
             >
-              <RotateCcw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <RotateCcw className={`w-3.5 h-3.5 text-blue-400 ${loading ? "animate-spin" : ""}`} />
+              <span>{loading ? "Refreshing..." : "Refresh"}</span>
             </button>
             <button
               onClick={onClose}
-              className="px-2.5 py-1 text-xs font-mono text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-lg border border-slate-800 transition-all"
+              className="px-2.5 py-1.5 text-xs font-mono text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-lg border border-slate-800 transition-all cursor-pointer"
             >
               Esc ✕
             </button>
