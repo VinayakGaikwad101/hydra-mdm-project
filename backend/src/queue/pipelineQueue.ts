@@ -6,9 +6,7 @@ import { simpleGit } from "simple-git";
 import { runCritic } from "../agents/critic.js";
 import { runCoder } from "../agents/coder.js";
 import { runSandbox } from "../agents/sandbox.js";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { AnalysisRunModel } from "../models/mongooseModels.js";
 
 const REDIS_HOST = process.env.REDIS_HOST || "127.0.0.1";
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || "6379", 10);
@@ -124,9 +122,8 @@ export const pipelineWorker = new Worker<PipelineJobData>(
       broadcast("agent_end", { agent: "sandbox", output: sandboxResult });
 
       // Update Run in DB
-      await prisma.analysisRun.update({
-        where: { id: runId },
-        data: {
+      try {
+        await AnalysisRunModel.findByIdAndUpdate(runId, {
           status: sandboxResult.success ? "COMPLETED" : "FAILED",
           errorLog: sandboxResult.testLogs,
           prMarkdown: `### HYDRA Autonomous Self-Healing Patch\n\n**Root Cause:** ${criticResult.errorSummary}\n\n**Fix Explanation:** ${coderResult.explanation}\n\n**Sandbox Verification:** Passed tests with zero regressions.`,
@@ -135,8 +132,10 @@ export const pipelineWorker = new Worker<PipelineJobData>(
             target: coderResult.targetContent,
             replacement: coderResult.replacementContent,
           }),
-        },
-      });
+        });
+      } catch (dbErr: any) {
+        console.error("AnalysisRunModel update error:", dbErr.message);
+      }
 
       broadcast("completed", {
         success: sandboxResult.success,
@@ -146,10 +145,12 @@ export const pipelineWorker = new Worker<PipelineJobData>(
       return { success: sandboxResult.success };
     } catch (err: any) {
       broadcast("log", { message: `❌ Pipeline fatal error: ${err.message}` });
-      await prisma.analysisRun.update({
-        where: { id: runId },
-        data: { status: "FAILED", errorLog: err.message },
-      });
+      try {
+        await AnalysisRunModel.findByIdAndUpdate(runId, {
+          status: "FAILED",
+          errorLog: err.message,
+        });
+      } catch {}
       throw err;
     } finally {
       // Cleanup workspace directory
