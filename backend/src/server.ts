@@ -21,8 +21,16 @@ mongoose
 
 app.use(
   cors({
-    origin: [CLIENT_URL, "http://localhost:3000", "https://*.vercel.app"],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl) or any vercel.app / localhost
+      if (!origin || origin.includes("vercel.app") || origin.includes("localhost") || origin.includes("127.0.0.1") || origin === CLIENT_URL) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Permissive for production webhooks and preview branches
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
 app.use(express.json({ limit: "20mb" }));
