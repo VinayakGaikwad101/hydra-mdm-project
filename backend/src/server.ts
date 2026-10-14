@@ -194,8 +194,7 @@ app.get("/api/queue/metrics", async (_req, res) => {
       "active",
       "completed",
       "failed",
-      "delayed",
-      "paused"
+      "delayed"
     );
 
     const activeJobs = await pipelineQueue.getActive(0, 10);
