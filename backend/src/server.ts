@@ -186,6 +186,62 @@ app.post("/api/pipeline/dispatch", async (req, res) => {
   }
 });
 
+// Live BullMQ Queue Telemetry (Waiting, Active, Completed, Failed, Delayed)
+app.get("/api/queue/metrics", async (_req, res) => {
+  try {
+    const counts = await pipelineQueue.getJobCounts(
+      "waiting",
+      "active",
+      "completed",
+      "failed",
+      "delayed",
+      "paused"
+    );
+
+    const activeJobs = await pipelineQueue.getActive(0, 10);
+    const waitingJobs = await pipelineQueue.getWaiting(0, 10);
+    const failedJobs = await pipelineQueue.getFailed(0, 10);
+    const completedJobs = await pipelineQueue.getCompleted(0, 10);
+
+    const mapJob = (j: any) => ({
+      id: j.id,
+      name: j.name,
+      timestamp: j.timestamp,
+      processedOn: j.processedOn,
+      finishedOn: j.finishedOn,
+      data: {
+        runId: j.data?.runId,
+        repoUrl: j.data?.repoUrl,
+        branch: j.data?.branch,
+        testCommand: j.data?.testCommand,
+      },
+      failedReason: j.failedReason,
+    });
+
+    res.json({
+      success: true,
+      counts,
+      active: activeJobs.map(mapJob),
+      waiting: waitingJobs.map(mapJob),
+      failed: failedJobs.map(mapJob),
+      completed: completedJobs.map(mapJob),
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Pipeline Runs History
+app.get("/api/runs", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+    const runs = await AnalysisRunModel.find().sort({ createdAt: -1 }).limit(limit);
+    res.json({ success: true, runs });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Server-Sent Events (SSE) log stream for real-time live terminal output
 app.get("/api/pipeline/stream/:runId", (req, res) => {
   const { runId } = req.params;

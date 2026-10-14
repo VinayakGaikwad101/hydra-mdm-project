@@ -12,11 +12,13 @@ import {
   Layers,
   LogOut,
   FileCode2,
+  Cpu,
 } from "lucide-react";
 import { ASTVisualizer } from "@/components/ASTVisualizer";
 import { Spinner, Skeleton } from "@/components/ui/Feedback";
 import { useAuth } from "@/context/AuthContext";
 import { AuthScreen } from "@/components/AuthScreen";
+import { QueueMetricsModal } from "@/components/QueueMetricsModal";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "https://137.23.40.113.sslip.io/hydra";
@@ -54,6 +56,7 @@ export default function HydraDashboard() {
     astNodes: [],
     astLinks: [],
   });
+  const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
@@ -187,7 +190,17 @@ export default function HydraDashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* BullMQ Live Queue Inspector Button */}
+          <button
+            onClick={() => setIsQueueModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900/80 hover:bg-slate-800 text-xs text-slate-300 hover:text-white transition-all shadow-sm"
+          >
+            <Cpu className="w-3.5 h-3.5 text-blue-400" />
+            <span className="font-mono text-[11px]">Worker Queues</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          </button>
+
           {/* Authenticated User Info */}
           <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900/60">
             <div className="h-7 w-7 rounded-lg bg-blue-600/30 border border-blue-500/40 text-blue-300 flex items-center justify-center font-bold text-xs uppercase">
@@ -207,6 +220,13 @@ export default function HydraDashboard() {
           </div>
         </div>
       </header>
+
+      {/* BullMQ Live Telemetry Modal */}
+      <QueueMetricsModal
+        backendUrl={BACKEND_URL}
+        isOpen={isQueueModalOpen}
+        onClose={() => setIsQueueModalOpen(false)}
+      />
 
       {/* Main Container */}
       <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto space-y-6">
