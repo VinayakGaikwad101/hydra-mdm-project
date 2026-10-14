@@ -1,4 +1,12 @@
-from src.pricing import compute_discount
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+
+try:
+    from src.pricing import compute_discount
+except ImportError:
+    from pricing import compute_discount
 
 def test_discount():
     assert compute_discount(100.0, 20.0) == 80.0

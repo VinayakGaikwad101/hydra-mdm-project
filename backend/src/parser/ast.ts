@@ -35,7 +35,13 @@ export function getASTAnalysis(filePath: string): ASTAnalysisResult {
   // Python AST parsing via embedded script
   if (ext === ".py") {
     try {
-      const parserScript = path.join(__dirname, "parse_ast.py");
+      let parserScript = path.join(__dirname, "parse_ast.py");
+      if (!fs.existsSync(parserScript)) {
+        parserScript = path.join(process.cwd(), "src", "parser", "parse_ast.py");
+      }
+      if (!fs.existsSync(parserScript)) {
+        parserScript = path.join(process.cwd(), "dist", "parser", "parse_ast.py");
+      }
       const pyCmd = process.platform === "win32" ? "python" : "python3";
       const stdout = execSync(`${pyCmd} "${parserScript}" "${filePath}"`, { encoding: "utf-8" });
       return JSON.parse(stdout) as ASTAnalysisResult;
@@ -55,6 +61,7 @@ export function getASTAnalysis(filePath: string): ASTAnalysisResult {
           "typescript",
           "jsx",
           "classProperties",
+          "doExpressions",
           "asyncDoExpressions",
           "decorators-legacy",
           "dynamicImport",

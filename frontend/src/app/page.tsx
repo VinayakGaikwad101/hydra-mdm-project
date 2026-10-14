@@ -331,11 +331,11 @@ export default function HydraDashboard() {
                 <button
                   type="button"
                   onClick={() => {
-                    setRepoUrl("https://github.com/VinayakGaikwad101/BankingAppJava");
-                    setBranch("master");
-                    setTestCommand("mvn test");
+                    setRepoUrl("https://github.com/VinayakGaikwad101/hydra-mdm-project");
+                    setBranch("main");
+                    setTestCommand("mvn test -f test-fixtures/java-target/pom.xml");
                     setStackTrace(
-                      "java.lang.ArithmeticException: / by zero\n\tat com.hydra.MathOps.divide(MathOps.java:5)\n\tat com.hydra.MathOpsTest.testDivide(MathOpsTest.java:10)"
+                      "java.lang.ArithmeticException: / by zero\n\tat com.hydra.MathOps.divide(test-fixtures/java-target/src/main/java/com/hydra/MathOps.java:6)"
                     );
                     setSimulate(false);
                   }}
