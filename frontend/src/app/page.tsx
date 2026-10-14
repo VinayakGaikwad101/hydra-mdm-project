@@ -482,19 +482,29 @@ export default function HydraDashboard() {
                   {runResult.explanation}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <span className="block text-[11px] font-mono text-red-400 font-semibold mb-1">Failing Code</span>
-                    <pre className="p-3 rounded-xl bg-red-950/30 border border-red-900/50 font-mono text-xs text-red-300 overflow-x-auto max-h-36">
-                      {runResult.targetContent || "No target"}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex flex-col">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] font-mono text-red-400 font-semibold flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-red-500 inline-block"></span>
+                        Original Defect Code
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">Before Patch</span>
+                    </div>
+                    <pre className="p-4 rounded-xl bg-red-950/20 border border-red-900/40 font-mono text-xs text-red-300 overflow-x-auto min-h-[140px] max-h-[260px] leading-relaxed scrollbar-thin">
+                      {runResult.targetContent || "No target code identified."}
                     </pre>
                   </div>
-                  <div>
-                    <span className="block text-[11px] font-mono text-emerald-400 font-semibold mb-1">
-                      Synthesized Fix
-                    </span>
-                    <pre className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-900/50 font-mono text-xs text-emerald-300 overflow-x-auto max-h-36">
-                      {runResult.replacementContent || "No replacement"}
+                  <div className="flex flex-col">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] font-mono text-emerald-400 font-semibold flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span>
+                        Synthesized & Verified Patch
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">After Patch</span>
+                    </div>
+                    <pre className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-900/40 font-mono text-xs text-emerald-300 overflow-x-auto min-h-[140px] max-h-[260px] leading-relaxed scrollbar-thin">
+                      {runResult.replacementContent || "No replacement synthesized."}
                     </pre>
                   </div>
                 </div>
@@ -503,8 +513,8 @@ export default function HydraDashboard() {
               <div className="space-y-3 py-4">
                 <Skeleton className="h-10 w-full" />
                 <div className="grid grid-cols-2 gap-3">
-                  <Skeleton className="h-28 w-full" />
-                  <Skeleton className="h-28 w-full" />
+                  <Skeleton className="h-36 w-full" />
+                  <Skeleton className="h-36 w-full" />
                 </div>
               </div>
             ) : (

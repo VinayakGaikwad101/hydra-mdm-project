@@ -78,16 +78,44 @@ const nodeTypes = {
 };
 
 export function ASTVisualizer({ nodes = [], links = [], targetFunction }: ASTVisualizerProps) {
-  const activeNodes = nodes;
-  const activeLinks = links;
+  // Prune irrelevant isolated nodes: If there are links, only show nodes connected in the call hierarchy
+  const { filteredNodes, filteredLinks } = useMemo(() => {
+    if (nodes.length <= 8 || links.length === 0) {
+      return { filteredNodes: nodes, filteredLinks: links };
+    }
+
+    // Collect all symbol names involved in calls
+    const connectedSymbols = new Set<string>();
+    links.forEach((l) => {
+      connectedSymbols.add(l.caller);
+      connectedSymbols.add(l.callee);
+    });
+
+    // Also keep target function or root class
+    const relevant = nodes.filter((n) => {
+      if (connectedSymbols.has(n.name)) return true;
+      if (targetFunction && n.name.toLowerCase().includes(targetFunction.toLowerCase())) return true;
+      return false;
+    });
+
+    // If filtering kept at least some nodes, use the pruned set, otherwise fallback to top nodes
+    const finalNodes = relevant.length >= 2 ? relevant : nodes.slice(0, 16);
+    const validNames = new Set(finalNodes.map((n) => n.name));
+    const finalLinks = links.filter((l) => validNames.has(l.caller) && validNames.has(l.callee));
+
+    return { filteredNodes: finalNodes, filteredLinks: finalLinks.length > 0 ? finalLinks : links };
+  }, [nodes, links, targetFunction]);
+
+  const activeNodes = filteredNodes;
+  const activeLinks = filteredLinks;
 
   const flowNodes: Node[] = useMemo(() => {
     if (activeNodes.length === 0) return [];
-    // Dynamic column calculation based on total nodes to prevent cramped overlap
+    // Dynamic column layout with ample breathing room
     const count = activeNodes.length;
-    const cols = count > 30 ? 5 : count > 15 ? 4 : count > 6 ? 3 : 2;
-    const xGap = 320;
-    const yGap = 160;
+    const cols = count > 16 ? 4 : count > 8 ? 3 : 2;
+    const xGap = 280;
+    const yGap = 140;
 
     return activeNodes.map((node, i) => {
       const col = i % cols;
@@ -97,7 +125,7 @@ export function ASTVisualizer({ nodes = [], links = [], targetFunction }: ASTVis
       return {
         id: node.name,
         type: "astNode",
-        position: { x: col * xGap + 60, y: row * yGap + 60 },
+        position: { x: col * xGap + 40, y: row * yGap + 40 },
         data: {
           ...node,
           isTarget: Boolean(isTarget),
