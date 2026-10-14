@@ -156,5 +156,58 @@ export function getASTAnalysis(filePath: string): ASTAnalysisResult {
     }
   }
 
+  // Java AST Parsing (Classes, Methods, Member functions)
+  if (ext === ".java") {
+    try {
+      const code = fs.readFileSync(filePath, "utf-8");
+      const nodes: ASTNode[] = [];
+      const links: ASTLink[] = [];
+      const lines = code.split("\n");
+
+      let currentClass = "";
+
+      lines.forEach((lineText, idx) => {
+        const lineNum = idx + 1;
+        const trimmed = lineText.trim();
+
+        // Match Class declaration
+        const classMatch = trimmed.match(/(?:public|protected|private)?\s*(?:static\s+)?class\s+(\w+)/);
+        if (classMatch) {
+          currentClass = classMatch[1];
+          nodes.push({
+            name: currentClass,
+            type: "class",
+            line: lineNum,
+          });
+        }
+
+        // Match Method declaration: e.g. public static int divide(int a, int b)
+        const methodMatch = trimmed.match(
+          /(?:public|protected|private)\s+(?:static\s+)?(?:[\w<>\[\]]+)\s+(\w+)\s*\(([^)]*)\)/
+        );
+        if (methodMatch && methodMatch[1] !== "if" && methodMatch[1] !== "while" && methodMatch[1] !== "for") {
+          const methodName = `${methodMatch[1]}()`;
+          nodes.push({
+            name: methodName,
+            type: "function",
+            line: lineNum,
+          });
+
+          if (currentClass) {
+            links.push({
+              caller: currentClass,
+              callee: methodName,
+              line: lineNum,
+            });
+          }
+        }
+      });
+
+      return { nodes, links };
+    } catch (err: any) {
+      return { nodes: [], links: [], error: `Java AST Parser error: ${err.message}` };
+    }
+  }
+
   return { nodes: [], links: [], error: `Unsupported file extension for AST parsing: ${ext}` };
 }
